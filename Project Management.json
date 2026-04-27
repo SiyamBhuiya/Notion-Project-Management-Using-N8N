@@ -1,0 +1,1355 @@
+{
+  "name": "siyam) jfmelon",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "return [\n{\n  \"project_name\": \"Teamspace Home\",\n  \"update_type\": \"meeting_log\",\n  \"content\": \"Met with the commercial team to review Q2 sponsorship pipeline. Three new prospects identified.\",\n  \"decisions\": [\n    \"Focus outreach on local Cascais brands first\",\n    \"Proposal template to be ready by end of April\"\n  ],\n  \"status\": \"On Track\",\n  \"next_milestone\": {\n    \"task\": \"Proposel send\",\n    \"date\": \"2026-04-30\"\n  },\n  \"owner\": \"David\",\n  \"blocker\": \"\",\n  \"open_questions\": [\n    \"Do we need board approval before signing any sponsorship above 10k?\"\n  ],\n  \"delegations\": [\n    {\n      \"to\": \"David\",\n      \"task\": \"Draft sponsorship proposal template\",\n      \"due_date\": \"2026-04-25\"\n    }\n  ]\n}\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4448,
+        13952
+      ],
+      "id": "3768eaea-85f6-410a-a894-4a329c1c8ed8",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        4224,
+        13952
+      ],
+      "id": "1fcdcda7-ceb2-4716-8ce9-8ad8f4eecb57",
+      "name": "When clicking Execute workflow"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "valid-check",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b7845d77-d3ae-4e92-9881-4292ff06f46a",
+      "name": "Input Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4896,
+        13952
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "text": "={{ $json.project_name }}",
+        "limit": 1,
+        "options": {}
+      },
+      "id": "f705ebcb-138c-43c0-8bfc-1ad6651cc237",
+      "name": "Search Notion for Project",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        5120,
+        13856
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "PM8i1jSr7DtT5gHL",
+          "name": "siyam Notion account2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Safely map through items\nconst results = items.map(item => {\n  // Check if properties and the specific field exist before reading 'text'\n  // Common Notion title path: properties.Name.title[0].text.content\n  const title = item.json.properties?.Name?.title?.[0]?.plain_text || \"No Title Found\";\n  \n  return {\n    json: {\n      project_name: $input.first().json.name,\n      found: true\n    }\n  };\n});\n\nif (results.length === 0) {\n  return [{ json: { found: false, project_name: \"Unknown\" } }];\n}\n\nreturn results;\n"
+      },
+      "id": "f1c5d8cd-07b1-4daf-9727-20b5416ac962",
+      "name": "Project Found in Notion?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5344,
+        13856
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.notion.com/v1/blocks/{{ $('Search Notion for Project').item.json.id }}/children?page_size=100",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1e4f7d49-cb32-4302-b45e-4f738b690753",
+      "name": "Get Page Blocks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5792,
+        13392
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "PM8i1jSr7DtT5gHL",
+          "name": "siyam Notion account2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/blocks/{{ $('Find Decision Log Block ID').item.json.target_block_id }}/children",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "7ed79572-eadc-4ad8-9c53-96def98b40d7",
+      "name": "Append Inside Decision Log Section",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6464,
+        13296
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "PM8i1jSr7DtT5gHL",
+          "name": "siyam Notion account2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Find the row index matching the project name\nconst rows = $input.all();\nconst projectName = $('Validate & Normalise Input1').first().json.project_name;\n\nlet rowIndex = -1;\nfor (let i = 0; i < rows.length; i++) {\n  const row = rows[i].json;\n  const cellValue = row['Project Name'] ?? row['project_name'] ?? row['Name'] ?? '';\n  if (cellValue.trim().toLowerCase() === projectName.toLowerCase()) {\n    rowIndex = i + 2; // +1 for header, +1 for 1-based index\n    break;\n  }\n}\n\nreturn [{\n  json: {\n    row_found: rowIndex > -1,\n    row_index: rowIndex,\n    project_name: projectName\n  }\n}];\n"
+      },
+      "id": "0f0e036f-7608-4de3-8c6e-119ebfdcfc22",
+      "name": "Find Project Row in Sheet",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6016,
+        14016
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.row_found }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b2b42276-a1da-4fa2-81e8-29e62be565ae",
+      "name": "Row Found in Sheet?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        6240,
+        14016
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1H7FicoWSK-mfa7TBrN7_dxds76zpTA7RJ2n-xqP7Uto",
+          "mode": "list",
+          "cachedResultName": "CEO Dashboard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H7FicoWSK-mfa7TBrN7_dxds76zpTA7RJ2n-xqP7Uto/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H7FicoWSK-mfa7TBrN7_dxds76zpTA7RJ2n-xqP7Uto/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Project Name": "={{ $('Validate & Normalise Input1').item.json.project_name }}",
+            "Status": "={{ $('Validate & Normalise Input1').item.json.status }}",
+            "Owner": "={{ $('Validate & Normalise Input1').item.json.owner }}",
+            "Next Milestone": "={{ $('Validate & Normalise Input1').item.json.next_milestone.task }}",
+            "Blocker": "={{ $('Validate & Normalise Input1').item.json.blocker }}"
+          },
+          "matchingColumns": [
+            "Project Name"
+          ],
+          "schema": [
+            {
+              "id": "Project Name",
+              "displayName": "Project Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Owner",
+              "displayName": "Owner",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Next Milestone",
+              "displayName": "Next Milestone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Blocker",
+              "displayName": "Blocker",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "21dd2bbe-6737-4cc5-b6b5-6a70c476ae66",
+      "name": "Update CEO Dashboard Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        6464,
+        14112
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "P7tAwoWY2ezY7CGm",
+          "name": "Siyam)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "siyambhuiya44@gmail.com",
+        "subject": "={{ '=4 CEO Decision Required: ' + $('Validate & Normalise Input1').first().json.project_name + '  ' + new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) }}",
+        "message": "={{ '<h2>Open Questions Requiring CEO Decision</h2><p><strong>Project:</strong> ' + $('Validate & Normalise Input1').first().json.project_name + '</p><p><strong>Submitted:</strong> ' + $('Validate & Normalise Input1').first().json.timestamp + '</p><hr><ul>' + $('Validate & Normalise Input1').first().json.open_questions.map(q => '<li>' + q + '</li>').join('') + '</ul><hr><p style=\"color:#888;font-size:12px\">Sent automatically by n8n CEO Project Automation</p>' }}",
+        "options": {}
+      },
+      "id": "2d599f78-7d2e-4154-9535-80fe875ca94b",
+      "name": "Email CEO: Open Questions Digest",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        6912,
+        14048
+      ],
+      "webhookId": "62eb622b-aeac-420c-8957-fbc4a6f8f99f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yYOa0wMjdqa9i6qY",
+          "name": "siyam API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BmBRRlYq4U1FvtzCLWP0Sj3oHwCmYuT7-epTQq2REkw",
+          "mode": "list",
+          "cachedResultName": "Contacts",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BmBRRlYq4U1FvtzCLWP0Sj3oHwCmYuT7-epTQq2REkw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BmBRRlYq4U1FvtzCLWP0Sj3oHwCmYuT7-epTQq2REkw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "fc14e56b-8065-4c30-9602-ff73c0211f67",
+      "name": "Read Contacts Table",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        7360,
+        14192
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "P7tAwoWY2ezY7CGm",
+          "name": "Siyam)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.to }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              },
+              "id": "8b838472-439f-4dca-9cfc-7c0a1eea3914"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "51ec3dc2-d6c0-43c9-9d2b-c9783e0c689e",
+      "name": "Valid Delegation?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        7808,
+        14192
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ '=Ë Task Delegated to You: ' + $json.task + ' [' + $json.project_name + ']' }}",
+        "message": "={{ '<h2>You have been assigned a task</h2><table style=\"border-collapse:collapse;width:100%;font-family:Arial,sans-serif\"><tr><td style=\"padding:8px;border:1px solid #ddd;background:#f9f9f9\"><strong>Project</strong></td><td style=\"padding:8px;border:1px solid #ddd\">' + $json.project_name + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;background:#f9f9f9\"><strong>Task</strong></td><td style=\"padding:8px;border:1px solid #ddd\">' + $json.task + '</td></tr><tr><td style=\"padding:8px;border:1px solid #ddd;background:#f9f9f9\"><strong>Due Date</strong></td><td style=\"padding:8px;border:1px solid #ddd\">' + $json.due_date + '</td></tr></table><br><p>Please acknowledge receipt by replying to this email.</p><p style=\"color:#888;font-size:12px\">Sent automatically by CEO Project Automation</p>' }}",
+        "options": {}
+      },
+      "id": "e174ffda-98cc-4f97-8aac-448a24b7f3db",
+      "name": "Send Delegation Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        8032,
+        14096
+      ],
+      "webhookId": "1678d294-bac0-4931-b496-d6805f122e8b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yYOa0wMjdqa9i6qY",
+          "name": "siyam API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true, \"message\": \"Project update processed\", \"project\": \"{{ $('Validate & Normalise Input1').first().json.project_name }}\", \"timestamp\": \"{{ $('Validate & Normalise Input1').first().json.timestamp }}\" }",
+        "options": {}
+      },
+      "id": "a78ae4bc-448f-4809-ac55-17be5a203c26",
+      "name": "Respond: 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        8256,
+        14016
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "siyambhuiya44@gmail.com",
+        "subject": "=¨ n8n Alert: Invalid Webhook Payload Received",
+        "message": "={{ '<h2>  Invalid Payload  Nothing Written</h2><p><strong>Error:</strong> ' + $json.error + '</p><h3>Raw Payload</h3><pre>' + JSON.stringify($json.raw, null, 2) + '</pre><p style=\"color:#888;font-size:12px\">Sent automatically by CEO Project Automation</p>' }}",
+        "options": {}
+      },
+      "id": "540c2769-abb3-4539-beda-5ec4987828b0",
+      "name": "Alert: Invalid Payload",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        5120,
+        14048
+      ],
+      "webhookId": "ee9a046f-4eac-4992-9de7-7d676c087591",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yYOa0wMjdqa9i6qY",
+          "name": "siyam API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\": false, \"error\": \"{{ $('Validate & Normalise Input1').first().json.error }}\"}",
+        "options": {}
+      },
+      "id": "791ae42e-a800-4db5-99df-a4f8fc08ece2",
+      "name": "Respond: 400 Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        5344,
+        14048
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "project-update",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "b870b1dc-e5ed-4b92-9c91-3ea56e44799d",
+      "name": "Webhook Trigger1",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        4224,
+        14512
+      ],
+      "webhookId": "project-update-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "found-check",
+              "leftValue": "={{ $json.found }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "491c58ff-1163-4896-9b72-44211bce4716",
+      "name": "Notion Page Found?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5568,
+        13856
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1H7FicoWSK-mfa7TBrN7_dxds76zpTA7RJ2n-xqP7Uto",
+          "mode": "list",
+          "cachedResultName": "CEO Dashboard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H7FicoWSK-mfa7TBrN7_dxds76zpTA7RJ2n-xqP7Uto/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1H7FicoWSK-mfa7TBrN7_dxds76zpTA7RJ2n-xqP7Uto/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "c9382dd4-6046-4f84-a748-f260ac29655b",
+      "name": "Read CEO Dashboard Sheet2",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5792,
+        14016
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "P7tAwoWY2ezY7CGm",
+          "name": "Siyam)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Validate & Normalise Input1').first().json.open_questions.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "84b1d0a4-c131-442b-a891-320f8e3f21e2",
+      "name": "Has Open Questions?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        6688,
+        14112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Validate & Normalise Input1').first().json.delegations.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c456f6c3-2322-45e7-be66-761a0626fdea",
+      "name": "Has Delegations?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        7136,
+        14112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a lookup map: Name (lowercase) ’ Email\nconst contactRows = $input.all();\nconst contactMap = {};\nfor (const row of contactRows) {\n  const name  = (row.json['Name'] ?? '').trim().toLowerCase();\n  const email = (row.json['Email'] ?? '').trim();\n  if (name && email) contactMap[name] = email;\n}\n\n// Get delegations from the validated input\nconst delegations = $('Validate & Normalise Input1').first().json.delegations;\nconst projectName = $('Validate & Normalise Input1').first().json.project_name;\n\nconst outputs = [];\nconst errors  = [];\n\nfor (const d of delegations) {\n  const email = contactMap[d.to.trim().toLowerCase()];\n  if (!email) {\n    errors.push(`Contact not found: ${d.to}`);\n    continue;\n  }\n  outputs.push({\n    json: {\n      to:          email,\n      name:        d.to,\n      task:        d.task,\n      due_date:    d.due_date,\n      project_name: projectName\n    }\n  });\n}\n\nif (errors.length > 0) {\n  // Add error sentinel items (will be routed to alert)\n  outputs.push({ json: { delegation_errors: errors, project_name: projectName } });\n}\n\nreturn outputs.length > 0 ? outputs : [{ json: { no_delegations: true } }];\n"
+      },
+      "id": "1d66dca6-dc7f-4551-88b7-9aa9f25c7863",
+      "name": "Resolve Delegation Emails2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7584,
+        14192
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "siyambhuiya44@gmail.com",
+        "subject": "=¨ n8n Alert: Project Not Found  {{ $('Validate & Normalise Input').first().json.project_name }}",
+        "message": "={{ '<h2>  Project Not Found  No Data Written</h2><p>The automation received an update for a project that does not exist in Notion or the CEO Dashboard Google Sheet.</p><p><strong>Project Name Received:</strong> ' + $('Validate & Normalise Input1').first().json.project_name + '</p><p><strong>Timestamp:</strong> ' + $('Validate & Normalise Input1').first().json.timestamp + '</p><h3>Action Required</h3><ol><li>Add the project page to Notion with the exact title above</li><li>Add a row to the CEO Dashboard sheet with the same project name</li><li>Re-submit the update</li></ol><h3>Raw Payload</h3><pre>' + JSON.stringify($('Validate & Normalise Input1').first().json, null, 2) + '</pre>' }}",
+        "options": {}
+      },
+      "id": "e7feecbb-7156-4b71-81c9-9ed6f1e33cde",
+      "name": "Alert: Project Not Found2",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        6464,
+        13872
+      ],
+      "webhookId": "36e90e18-9b6e-41dc-928b-ca89b94e5fce",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yYOa0wMjdqa9i6qY",
+          "name": "siyam API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "//     INPUT VALIDATION                                                        \nconst body = $input.first().json.body ?? $input.first().json;\n\nconst REQUIRED = [\n  'project_name', 'update_type', 'content',\n  'decisions', 'status', 'next_milestone', 'owner'\n];\n\nconst missing = REQUIRED.filter(k => body[k] === undefined || body[k] === null || body[k] === '');\n\nif (missing.length > 0) {\n  return [{\n    json: {\n      valid: false,\n      error: `Missing required fields: ${missing.join(', ')}`,\n      raw: body\n    }\n  }];\n}\n\nconst VALID_UPDATE_TYPES = ['meeting_log', 'meeting log','decision', 'status_update','decision log','decision_log'];\nconst VALID_STATUSES = ['On Track', 'At Risk', 'Blocked'];\n\nif (!VALID_UPDATE_TYPES.includes(body.update_type)) {\n  return [{ json: { valid: false, error: `update_type must be one of: ${VALID_UPDATE_TYPES.join(', ')}`, raw: body } }];\n}\n\nif (!VALID_STATUSES.includes(body.status)) {\n  return [{ json: { valid: false, error: `status must be one of: ${VALID_STATUSES.join(', ')}`, raw: body } }];\n}\n\nif (!Array.isArray(body.decisions)) {\n  return [{ json: { valid: false, error: 'decisions must be an array', raw: body } }];\n}\n\nif (!Array.isArray(body.open_questions)) {\n  return [{ json: { valid: false, error: 'open_questions must be an array', raw: body } }];\n}\n\nif (!Array.isArray(body.delegations)) {\n  return [{ json: { valid: false, error: 'delegations must be an array', raw: body } }];\n}\n\n// Normalise next_milestone\nconst nm = body.next_milestone;\nconst milestone = Array.isArray(nm) ? nm[0] : nm;\nif (!milestone || !milestone.task || !milestone.date) {\n  return [{ json: { valid: false, error: 'next_milestone must contain {task, date}', raw: body } }];\n}\n\nreturn [{\n  json: {\n    valid: true,\n    project_name:    body.project_name.trim(),\n    update_type:     body.update_type,\n    content:         body.content,\n    decisions:       body.decisions,\n    status:          body.status,\n    next_milestone:  milestone,\n    owner:           body.owner,\n    blocker:         body.blocker ?? '',\n    open_questions:  body.open_questions,\n    delegations:     body.delegations,\n    timestamp: new Date().toLocaleString('en-GB', {\n  day: '2-digit',\n  month: 'short',\n  year: 'numeric',\n  hour: '2-digit',\n  minute: '2-digit',\n  hour12: false\n})\n  }\n}];\n"
+      },
+      "id": "5e4ebcac-f32b-421e-808b-a43c0c673b7f",
+      "name": "Validate & Normalise Input1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4672,
+        13952
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.notion.com/v1/blocks/{{ $json.table_block_id }}/children",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        6240,
+        13104
+      ],
+      "id": "711cbb56-8fe3-4974-a360-d402ed551a29",
+      "name": "Get Table block",
+      "credentials": {
+        "notionApi": {
+          "id": "PM8i1jSr7DtT5gHL",
+          "name": "siyam Notion account2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.first().json.results.filter(row => row.type === 'table_row');\nconst data = $('Validate & Normalise Input1').first().json;\n\nconst valueMap = {\n  'project name':   data.project_name ?? '',\n  'owner':          data.owner ?? '',\n  'status':         data.status ?? '',\n  'next milestone': data.next_milestone?.task ?? '',\n  'target date':    data.next_milestone?.date ?? '',\n  'blocker':        data.blocker ?? 'None',\n  'last updated':   data.timestamp ?? ''\n};\n\nreturn rows.map(row => {\n  const col1 = row.table_row?.cells?.[0]?.[0]?.text?.content ?? '';\n  const label = col1.toLowerCase();\n\n  // Header row\n  if (col1 === 'Field') {\n    return {\n      json: {\n        row_id: row.id,\n        body: JSON.stringify({\n          table_row: {\n            cells: [\n              [{ type: 'text', text: { content: 'Field' } }],\n              [{ type: 'text', text: { content: 'Value' } }]\n            ]\n          }\n        })\n      }\n    };\n  }\n\n  // All other rows  keep col 1, update col 2\n  const cells = [\n    [{ type: 'text', text: { content: col1 } }],\n    [{ type: 'text', text: { content: valueMap[label] ?? '' } }]\n  ];\n\n  return {\n    json: {\n      row_id: row.id,\n      body: JSON.stringify({\n        table_row: { cells }\n      })\n    }\n  };\n});"
+      },
+      "id": "61c07bbd-4f99-4875-82db-7df15808fcbf",
+      "name": "Get Row ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6464,
+        13104
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/blocks/{{ $json.row_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        6688,
+        13104
+      ],
+      "id": "9909a11f-06da-4b59-b0bb-2dac0b72f92b",
+      "name": "Update Row",
+      "credentials": {
+        "notionApi": {
+          "id": "PM8i1jSr7DtT5gHL",
+          "name": "siyam Notion account2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const blocks = $input.first().json.results ?? [];\n\nconst tables = blocks.filter(block => block.type === 'table');\n\n// 0 = first table, 1 = second table, etc.\nconst tableBlock = tables[1];\n\nif (!tableBlock) {\n  throw new Error('No table found at this position');\n}\n\nreturn [{ json: { table_block_id: tableBlock.id } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6016,
+        13104
+      ],
+      "id": "dfd32a49-0007-485a-971d-02f32b371ac3",
+      "name": "Find Table Block ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst blocks = data.results ?? [];\n\nlet openQuestionsBlockId = null;\n\nfor (const block of blocks) {\n  const type = block.type;\n  const headingTypes = ['heading_1', 'heading_2', 'heading_3'];\n  if (headingTypes.includes(type)) {\n    const text = (block[type]?.rich_text ?? []).map(t => t.plain_text).join('').toLowerCase();\n    if (text.includes('open question')) {\n      openQuestionsBlockId = block.id;\n      break;\n    }\n  }\n}\n\nconst pageId = $('Project Found in Notion?').first().json.page_id;\n\nreturn [{\n  json: {\n    target_block_id: openQuestionsBlockId ?? pageId,\n    found_section: openQuestionsBlockId !== null\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6016,
+        13488
+      ],
+      "id": "e34e8fec-0fd3-4836-bd39-cedb1852931d",
+      "name": "Get Open Question log"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Validate & Normalise Input1').first().json;\nconst decisions = data.decisions;\nconst timestamp = data.timestamp;\n\nconst children = [\n  ...decisions.map(d => ({\n    object: 'block',\n    type: 'bulleted_list_item',\n    bulleted_list_item: {\n      rich_text: [{ type: 'text', text: { content: d } }]\n    }\n  })),\n  {\n    object: 'block',\n    type: 'paragraph',\n    paragraph: {\n      rich_text: [{\n        type: 'text',\n        text: { content: timestamp },\n        annotations: { color: 'gray', italic: true }\n      }]\n    }\n  },\n  {\n    object: 'block',\n    type: 'divider',\n    divider: {}\n  },\n];\n\nreturn [{\n  json: {\n    body: JSON.stringify({ children })\n  }\n}];"
+      },
+      "id": "52881796-b6d2-42eb-b09b-9232f35d3dc5",
+      "name": "Create decison json",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6240,
+        13296
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const questions = $('Validate & Normalise Input1').first().json.open_questions;\nconst timestamp = $('Validate & Normalise Input1').first().json.timestamp;\n\nconst children = [\n  ...questions.map(q => ({\n    object: 'block',\n    type: 'bulleted_list_item',\n    bulleted_list_item: {\n      rich_text: [{ type: 'text', text: { content: q } }]\n    }\n  })),\n  {\n    object: 'block',\n    type: 'divider',\n    divider: {}\n  }\n];\n\nreturn [{\n  json: {\n    body: JSON.stringify({ children })\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6240,
+        13488
+      ],
+      "id": "40382ac7-bafb-4c50-9e37-f2eb64503658",
+      "name": "Create question json"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Find the 'Decision Log' heading block and return its block_id\n// so we can append children INSIDE it instead of at page level.\nconst data = $input.first().json;\nconst blocks = data.results ?? [];\n\nlet decisionLogBlockId = null;\n\nfor (const block of blocks) {\n  const type = block.type;\n  // Match any heading level whose plain_text contains 'decision log' (case-insensitive)\n  const headingTypes = ['heading_1','heading_2','heading_3'];\n  if (headingTypes.includes(type)) {\n    const text = (block[type]?.rich_text ?? []).map(t => t.plain_text).join('').toLowerCase();\n    if (text.includes('decision log')) {\n      decisionLogBlockId = block.id;\n      break;\n    }\n  }\n}\n\nconst pageId = $('Project Found in Notion?').first().json.page_id;\n\n// Fall back to appending at page level if the heading doesn't exist\nreturn [{\n  json: {\n    target_block_id: decisionLogBlockId ?? pageId,\n    found_section:   decisionLogBlockId !== null\n  }\n}];\n"
+      },
+      "id": "b13f7a51-1880-4705-a966-68c8602831a6",
+      "name": "Find Decision Log Block ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6016,
+        13296
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const blocks = $input.first().json.results ?? [];\n\nlet targetBlockId = null;\n\nfor (const block of blocks) {\n  const type = block.type;\n  const headingTypes = ['heading_1', 'heading_2', 'heading_3'];\n  if (headingTypes.includes(type)) {\n    const text = (block[type]?.rich_text ?? []).map(t => t.plain_text).join('').toLowerCase();\n    if (text.includes('meeting log')) {\n      targetBlockId = block.id;\n      break;\n    }\n  }\n}\n\nconst pageId = $('Project Found in Notion?').first().json.page_id;\n\nreturn [{\n  json: {\n    target_block_id: targetBlockId ?? pageId,\n    found_section: targetBlockId !== null\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6016,
+        13680
+      ],
+      "id": "b1bca1ed-8fcc-4e93-90aa-cbb20517fade",
+      "name": "Find Meeting Log Block ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $('Validate & Normalise Input1').first().json;\n\n// Pick your preferred symbol: '¶', 'Æ', '’', 'ª', '&', 'º'\nconst bullet = '¶';\n\nconst children = [\n  {\n    object: 'block',\n    type: 'paragraph',\n    paragraph: {\n      rich_text: [{ \n        type: 'text', \n        text: { content: `${bullet}  ${data.content}` }\n      }]\n    }\n  },\n  {\n    object: 'block',\n    type: 'paragraph',\n    paragraph: {\n      rich_text: [{\n        type: 'text',\n        text: { content: data.timestamp },\n        annotations: { italic: true, color: 'gray' }\n      }]\n    }\n  },\n  {\n    object: 'block',\n    type: 'divider',\n    divider: {}\n  }\n];\n\nreturn [{ json: { body: JSON.stringify({ children }) } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6240,
+        13680
+      ],
+      "id": "806ccd43-3278-42e3-a600-0c2e54268983",
+      "name": "Create Meeting Log Body"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/blocks/{{ $('Find Meeting Log Block ID').item.json.target_block_id }}/children",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "56a3e6c7-c480-4f97-9160-3735bde9c3de",
+      "name": "Append Inside Meeting Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6464,
+        13680
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "PM8i1jSr7DtT5gHL",
+          "name": "siyam Notion account2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.notion.com/v1/blocks/{{ $('Get Open Question log').item.json.target_block_id }}/children",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "notionApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Notion-Version",
+              "value": "2022-06-28"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.body }}",
+        "options": {}
+      },
+      "id": "c90868c0-3afa-4f52-b465-842e83247582",
+      "name": "Append Inside Decision Log Section1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        6464,
+        13488
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "PM8i1jSr7DtT5gHL",
+          "name": "siyam Notion account2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "siyambhuiya44@gmail.com",
+        "subject": "==¨ n8n Alert: Not a valid Delegation   {{ $('Resolve Delegation Emails2').item.json.name }}",
+        "message": "={{ '<h2>  Project Not Found  No Data Written</h2><p>The automation received an update for a project that does not exist in Notion or the CEO Dashboard Google Sheet.</p><p><strong>Project Name Received:</strong> ' + $('Validate & Normalise Input1').first().json.project_name + '</p><p><strong>Timestamp:</strong> ' + $('Validate & Normalise Input1').first().json.timestamp + '</p><h3>Action Required</h3><ol><li>Add the project page to Notion with the exact title above</li><li>Add a row to the CEO Dashboard sheet with the same project name</li><li>Re-submit the update</li></ol><h3>Raw Payload</h3><pre>' + JSON.stringify($('Validate & Normalise Input1').first().json, null, 2) + '</pre>' }}",
+        "options": {}
+      },
+      "id": "36ce0de5-b1a2-4e47-b2cf-0c391bbfe01f",
+      "name": "Alert: Project Not Found",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        8032,
+        14288
+      ],
+      "webhookId": "36e90e18-9b6e-41dc-928b-ca89b94e5fce",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "yYOa0wMjdqa9i6qY",
+          "name": "siyam API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Validate & Normalise Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking Execute workflow": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Valid?": {
+      "main": [
+        [
+          {
+            "node": "Search Notion for Project",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: Invalid Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert: Invalid Payload": {
+      "main": [
+        [
+          {
+            "node": "Respond: 400 Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Notion for Project": {
+      "main": [
+        [
+          {
+            "node": "Project Found in Notion?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Project Found in Notion?": {
+      "main": [
+        [
+          {
+            "node": "Notion Page Found?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Page Blocks": {
+      "main": [
+        [
+          {
+            "node": "Find Decision Log Block ID",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Find Table Block ID",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Open Question log",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Find Meeting Log Block ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Project Row in Sheet": {
+      "main": [
+        [
+          {
+            "node": "Row Found in Sheet?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Row Found in Sheet?": {
+      "main": [
+        [
+          {
+            "node": "Update CEO Dashboard Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: Project Not Found2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update CEO Dashboard Sheet": {
+      "main": [
+        [
+          {
+            "node": "Has Open Questions?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email CEO: Open Questions Digest": {
+      "main": [
+        [
+          {
+            "node": "Has Delegations?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Contacts Table": {
+      "main": [
+        [
+          {
+            "node": "Resolve Delegation Emails2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Delegation?": {
+      "main": [
+        [
+          {
+            "node": "Send Delegation Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: Project Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Delegation Email": {
+      "main": [
+        [
+          {
+            "node": "Respond: 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion Page Found?2": {
+      "main": [
+        [
+          {
+            "node": "Get Page Blocks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read CEO Dashboard Sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert: Project Not Found2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CEO Dashboard Sheet2": {
+      "main": [
+        [
+          {
+            "node": "Find Project Row in Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Open Questions?2": {
+      "main": [
+        [
+          {
+            "node": "Email CEO: Open Questions Digest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has Delegations?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Delegations?2": {
+      "main": [
+        [
+          {
+            "node": "Read Contacts Table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond: 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Delegation Emails2": {
+      "main": [
+        [
+          {
+            "node": "Valid Delegation?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Normalise Input1": {
+      "main": [
+        [
+          {
+            "node": "Input Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Table block": {
+      "main": [
+        [
+          {
+            "node": "Get Row ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Row ID": {
+      "main": [
+        [
+          {
+            "node": "Update Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Row": {
+      "main": [
+        []
+      ]
+    },
+    "Find Table Block ID": {
+      "main": [
+        [
+          {
+            "node": "Get Table block",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Open Question log": {
+      "main": [
+        [
+          {
+            "node": "Create question json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create decison json": {
+      "main": [
+        [
+          {
+            "node": "Append Inside Decision Log Section",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create question json": {
+      "main": [
+        [
+          {
+            "node": "Append Inside Decision Log Section1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Decision Log Block ID": {
+      "main": [
+        [
+          {
+            "node": "Create decison json",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Meeting Log Block ID": {
+      "main": [
+        [
+          {
+            "node": "Create Meeting Log Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Meeting Log Body": {
+      "main": [
+        [
+          {
+            "node": "Append Inside Meeting Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Inside Decision Log Section1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "89011ba2-2c15-47dd-aaac-31ed1b94ab71",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "977f0fa24754f97c05df804c0f6705a0f4f90d697fe816283eafa7446b638a45"
+  },
+  "id": "uiyNYfC7JhBz6DZJ",
+  "tags": [
+    {
+      "updatedAt": "2026-04-21T02:50:11.633Z",
+      "createdAt": "2026-04-21T02:50:11.633Z",
+      "id": "GxcrMTAhvKHqo5vg",
+      "name": "automation"
+    },
+    {
+      "updatedAt": "2026-04-21T03:32:47.251Z",
+      "createdAt": "2026-04-21T03:32:47.251Z",
+      "id": "H4aeRXT0DMk4G4Oi",
+      "name": "CEO Automation"
+    },
+    {
+      "updatedAt": "2026-04-21T02:50:11.882Z",
+      "createdAt": "2026-04-21T02:50:11.882Z",
+      "id": "m0KaidqhnI1otb4Q",
+      "name": "project-management"
+    },
+    {
+      "updatedAt": "2026-04-21T02:50:11.790Z",
+      "createdAt": "2026-04-21T02:50:11.790Z",
+      "id": "neB58nrePpNSejsp",
+      "name": "notion"
+    }
+  ]
+}
